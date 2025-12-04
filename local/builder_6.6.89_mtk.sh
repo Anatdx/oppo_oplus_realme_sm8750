@@ -13,22 +13,22 @@ read -p "请输入自定义内核后缀（默认：android15-8-g29d86c5fc9dd-abo
 CUSTOM_SUFFIX=${CUSTOM_SUFFIX:-android15-8-g29d86c5fc9dd-abogki428889875-4k}
 read -p "是否启用susfs？(y/n，默认：y): " APPLY_SUSFS
 APPLY_SUSFS=${APPLY_SUSFS:-y}
-read -p "是否启用 KPM？(y/n，默认：n): " USE_PATCH_LINUX
-USE_PATCH_LINUX=${USE_PATCH_LINUX:-n}
+read -p "是否启用 KPM？(y/n，默认：y): " USE_PATCH_LINUX
+USE_PATCH_LINUX=${USE_PATCH_LINUX:-y}
 read -p "KSU分支版本(y=SukiSU Ultra, n=KernelSU Next, m=MKSU, k=KSU, 默认：y): " KSU_BRANCH
 KSU_BRANCH=${KSU_BRANCH:-y}
 read -p "是否应用 lz4 1.10.0 & zstd 1.5.7 补丁？(y/n，默认：y): " APPLY_LZ4
 APPLY_LZ4=${APPLY_LZ4:-y}
 read -p "是否应用 lz4kd 补丁？(y/n，默认：n): " APPLY_LZ4KD
 APPLY_LZ4KD=${APPLY_LZ4KD:-n}
-read -p "是否启用网络功能增强优化配置？(y/n，默认：y): " APPLY_BETTERNET
-APPLY_BETTERNET=${APPLY_BETTERNET:-y}
+read -p "是否启用网络功能增强优化配置？(y/n，默认：n): " APPLY_BETTERNET
+APPLY_BETTERNET=${APPLY_BETTERNET:-n}
 read -p "是否添加 BBR 等一系列拥塞控制算法？(y添加/n禁用/d默认，默认：n): " APPLY_BBR
 APPLY_BBR=${APPLY_BBR:-n}
 read -p "是否启用ADIOS调度器？(y/n，默认：y): " APPLY_ADIOS
 APPLY_ADIOS=${APPLY_ADIOS:-y}
-read -p "是否启用Re-Kernel？(y/n，默认：n): " APPLY_REKERNEL
-APPLY_REKERNEL=${APPLY_REKERNEL:-n}
+read -p "是否启用Re-Kernel？(y/n，默认：y): " APPLY_REKERNEL
+APPLY_REKERNEL=${APPLY_REKERNEL:-y}
 read -p "是否启用内核级基带保护？(y/n，默认：y): " APPLY_BBG
 APPLY_BBG=${APPLY_BBG:-y}
 
@@ -240,6 +240,30 @@ else
   cd "$WORKDIR/kernel_workspace"
 fi
 
+# ===== 应用 Hymo VFS Hook 补丁 =====
+echo ">>> 应用 Hymo VFS Hook 补丁..."
+cd "$WORKDIR/kernel_workspace/common"
+
+# 检查是否已经patch过
+if ! grep -q "hymo_vfs_redirect" fs/open.c 2>/dev/null; then
+  echo "  [*] 备份 open.c..."
+  cp fs/open.c fs/open.c.bak.hymo
+
+  echo "  [*] 注入 VFS hook 代码..."
+  python3 "$SCRIPT_DIR/hymofs_patcher.py"
+
+  if [ $? -eq 0 ]; then
+    echo "  [✓] Hymo VFS Hook 补丁应用成功"
+  else
+    echo "  [✗] Hymo VFS Hook 补丁应用失败"
+    exit 1
+  fi
+else
+  echo "  [√] Hymo VFS Hook 已应用,跳过..."
+fi
+
+cd "$WORKDIR/kernel_workspace"
+
 # ===== 添加 defconfig 配置项 =====
 echo ">>> 添加 defconfig 配置项..."
 DEFCONFIG_FILE=./common/arch/arm64/configs/gki_defconfig
@@ -266,6 +290,9 @@ fi
 #添加对 Mountify (backslashxx/mountify) 模块的支持
 echo "CONFIG_TMPFS_XATTR=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$DEFCONFIG_FILE"
+
+# 添加 Hymo VFS Hook 配置
+echo "CONFIG_HYMO_VFS_HOOK=y" >> "$DEFCONFIG_FILE"
 
 # 开启O2编译优化配置
 echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$DEFCONFIG_FILE"
@@ -393,6 +420,7 @@ sed -i 's/check_defconfig//' ./common/build.config.gki
 echo ">>> 开始编译内核..."
 cd common
 make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
+
 echo ">>> 内核编译成功！"
 
 # ===== 选择使用 patch_linux (KPM补丁)=====
