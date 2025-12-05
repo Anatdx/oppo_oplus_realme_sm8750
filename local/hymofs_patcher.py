@@ -33,14 +33,14 @@ def patch_open_c(content):
         "#include <linux/mount.h>\n"
     )
     
-    if "Hymo VFS Hook" in content:
+    if "HymoFS Hook" in content:
         return content
 
     content = re.sub(r'(#include <linux/syscalls.h>)', r'\1\n' + includes, content)
 
     # Core Hook Logic
     hook_code = (
-        "\n/* Hymo VFS Hook - Dynamic Path Redirection */\n"
+        "\n/* HymoFS Hook - Dynamic Path Redirection */\n"
         "#define HYMO_MAX_MODULES 256\n"
         "#define HYMO_MODULE_NAME_LEN 64\n"
         "\n"
@@ -107,14 +107,14 @@ def patch_open_c(content):
         "    .proc_write = hymo_ctl_write,\n"
         "};\n"
         "\n"
-        "static int __init hymo_vfs_init(void)\n"
+        "static int __init hymofs_init(void)\n"
         "{\n"
         "    proc_create(\"hymo_ctl\", 0660, NULL, &hymo_ctl_ops);\n"
         "    return 0;\n"
         "}\n"
-        "fs_initcall(hymo_vfs_init);\n"
+        "fs_initcall(hymofs_init);\n"
         "\n"
-        "bool hymo_vfs_redirect(const struct path *path, struct path *new_path)\n"
+        "bool hymofs_redirect(const struct path *path, struct path *new_path)\n"
         "{\n"
         "    char *pathname, *buf, *redirect_buf;\n"
         "    bool redirected = false;\n"
@@ -159,14 +159,14 @@ def patch_open_c(content):
         "    kfree(redirect_buf);\n"
         "    return redirected;\n"
         "}\n"
-        "EXPORT_SYMBOL(hymo_vfs_redirect);\n"
+        "EXPORT_SYMBOL(hymofs_redirect);\n"
         "\n"
-        "static int hymo_vfs_open(const struct path *path, struct file *file)\n"
+        "static int hymofs_open(const struct path *path, struct file *file)\n"
         "{\n"
         "    struct path redirect_path;\n"
         "    const struct path *final_path = path;\n"
         "    int ret;\n"
-        "    if (hymo_vfs_redirect(path, &redirect_path))\n"
+        "    if (hymofs_redirect(path, &redirect_path))\n"
         "        final_path = &redirect_path;\n"
         "    file->f_path = *final_path;\n"
         "    ret = do_dentry_open(file, d_backing_inode(final_path->dentry), NULL);\n"
@@ -181,7 +181,7 @@ def patch_open_c(content):
     
     # Replace vfs_open body with wrapper call
     def replace_vfs_open(match):
-        return match.group(1) + hook_code + "\nint vfs_open(const struct path *path, struct file *file)\n{\n    return hymo_vfs_open(path, file);\n}\n"
+        return match.group(1) + hook_code + "\nint vfs_open(const struct path *path, struct file *file)\n{\n    return hymofs_open(path, file);\n}\n"
 
     return re.sub(pattern, replace_vfs_open, content, flags=re.DOTALL)
 
@@ -189,8 +189,8 @@ def patch_open_c(content):
 # 2. Patch fs/stat.c (vfs_getattr)
 # ==========================================
 def patch_stat_c(content):
-    decl = "\nextern bool hymo_vfs_redirect(const struct path *path, struct path *new_path);\n"
-    if "hymo_vfs_redirect" not in content:
+    decl = "\nextern bool hymofs_redirect(const struct path *path, struct path *new_path);\n"
+    if "hymofs_redirect" not in content:
         content = re.sub(r'(#include "internal.h")', r'\1' + decl, content)
 
     new_vfs_getattr = (
@@ -204,7 +204,7 @@ def patch_stat_c(content):
         "    if (WARN_ON_ONCE(query_flags & AT_GETATTR_NOSEC))\n"
         "        return -EPERM;\n"
         "\n"
-        "    if (hymo_vfs_redirect(path, &redirect_path))\n"
+        "    if (hymofs_redirect(path, &redirect_path))\n"
         "        final_path = &redirect_path;\n"
         "\n"
         "    retval = security_inode_getattr(final_path);\n"
@@ -226,17 +226,17 @@ def patch_stat_c(content):
 # 3. Patch fs/namei.c (readlinkat -> vfs_readlink)
 # ==========================================
 def patch_namei_c(content):
-    decl = "\nextern bool hymo_vfs_redirect(const struct path *path, struct path *new_path);\n"
-    if "hymo_vfs_redirect" not in content:
+    decl = "\nextern bool hymofs_redirect(const struct path *path, struct path *new_path);\n"
+    if "hymofs_redirect" not in content:
         content = re.sub(r'(#include "internal.h")', r'\1' + decl, content)
 
     # Helper function to handle redirection for readlink
     helper_func = (
-        "\nstatic int hymo_vfs_readlink(struct path *path, char __user *buf, int buflen)\n"
+        "\nstatic int hymofs_readlink(struct path *path, char __user *buf, int buflen)\n"
         "{\n"
         "    struct path redirect_path;\n"
         "    int ret;\n"
-        "    if (hymo_vfs_redirect(path, &redirect_path)) {\n"
+        "    if (hymofs_redirect(path, &redirect_path)) {\n"
         "        ret = vfs_readlink(redirect_path.dentry, buf, buflen);\n"
         "        path_put(&redirect_path);\n"
         "        return ret;\n"
@@ -251,7 +251,7 @@ def patch_namei_c(content):
     # Replace vfs_readlink call inside do_readlinkat
     # Look for: error = vfs_readlink(path.dentry, buf, buflen);
     pattern = r'(error\s*=\s*)vfs_readlink\(path\.dentry,\s*buf,\s*buflen\);'
-    content = re.sub(pattern, r'\1hymo_vfs_readlink(&path, buf, buflen);', content)
+    content = re.sub(pattern, r'\1hymofs_readlink(&path, buf, buflen);', content)
     
     return content
 
@@ -259,8 +259,8 @@ def patch_namei_c(content):
 # 4. Patch fs/xattr.c (path_getxattr/listxattr)
 # ==========================================
 def patch_xattr_c(content):
-    decl = "\nextern bool hymo_vfs_redirect(const struct path *path, struct path *new_path);\n"
-    if "hymo_vfs_redirect" not in content:
+    decl = "\nextern bool hymofs_redirect(const struct path *path, struct path *new_path);\n"
+    if "hymofs_redirect" not in content:
         content = re.sub(r'(#include "internal.h")', r'\1' + decl, content)
 
     # Helper for getxattr
@@ -269,7 +269,7 @@ def patch_xattr_c(content):
         "{\n"
         "    struct path redirect_path;\n"
         "    ssize_t ret;\n"
-        "    if (hymo_vfs_redirect(path, &redirect_path)) {\n"
+        "    if (hymofs_redirect(path, &redirect_path)) {\n"
         "        ret = vfs_getxattr(mnt_idmap(redirect_path.mnt), redirect_path.dentry, name, value, size);\n"
         "        path_put(&redirect_path);\n"
         "        return ret;\n"
@@ -284,7 +284,7 @@ def patch_xattr_c(content):
         "{\n"
         "    struct path redirect_path;\n"
         "    ssize_t ret;\n"
-        "    if (hymo_vfs_redirect(path, &redirect_path)) {\n"
+        "    if (hymofs_redirect(path, &redirect_path)) {\n"
         "        ret = vfs_listxattr(redirect_path.dentry, list, size);\n"
         "        path_put(&redirect_path);\n"
         "        return ret;\n"
@@ -314,7 +314,7 @@ def patch_xattr_c(content):
 # ==========================================
 # Main Execution
 # ==========================================
-print(">>> Hymo VFS Patcher (Corrected Version) <<<")
+print(">>> HymoFS Patcher (Corrected Version) <<<")
 patch_file('fs/open.c', 'vfs_open hook', patch_open_c)
 patch_file('fs/stat.c', 'vfs_getattr hook', patch_stat_c)
 patch_file('fs/namei.c', 'readlinkat hook', patch_namei_c)

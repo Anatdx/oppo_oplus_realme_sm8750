@@ -283,26 +283,18 @@ else
   cd "$WORKDIR/kernel_workspace"
 fi
 
-# ===== 应用 Hymo VFS Hook 补丁 =====
-echo ">>> 应用 Hymo VFS Hook 补丁..."
+# ===== 应用 HymoFS Hook 补丁 =====
+echo ">>> 应用 HymoFS Hook 补丁..."
 cd "$WORKDIR/kernel_workspace/common"
 
-# 检查是否已经patch过
-if ! grep -q "hymo_vfs_redirect" fs/open.c 2>/dev/null; then
-  echo "  [*] 备份 open.c..."
-  cp fs/open.c fs/open.c.bak.hymo
+echo "  [*] 注入 HymoFS hook 代码..."
+python3 "$SCRIPT_DIR/hymofs_patcher.py"
 
-  echo "  [*] 注入 VFS hook 代码..."
-  python3 "$SCRIPT_DIR/hymofs_patcher.py"
-
-  if [ $? -eq 0 ]; then
-    echo "  [✓] Hymo VFS Hook 补丁应用成功"
-  else
-    echo "  [✗] Hymo VFS Hook 补丁应用失败"
-    exit 1
-  fi
+if [ $? -eq 0 ]; then
+  echo "  [✓] HymoFS Hook 补丁应用成功"
 else
-  echo "  [√] Hymo VFS Hook 已应用,跳过..."
+  echo "  [✗] HymoFS Hook 补丁应用失败"
+  exit 1
 fi
 
 cd "$WORKDIR/kernel_workspace"
@@ -334,8 +326,8 @@ fi
 echo "CONFIG_TMPFS_XATTR=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$DEFCONFIG_FILE"
 
-# 添加 Hymo VFS Hook 配置
-echo "CONFIG_HYMO_VFS_HOOK=y" >> "$DEFCONFIG_FILE"
+# 添加 HymoFS Hook 配置
+echo "CONFIG_HYMOFS_HOOK=y" >> "$DEFCONFIG_FILE"
 
 # 开启O2编译优化配置
 echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$DEFCONFIG_FILE"
