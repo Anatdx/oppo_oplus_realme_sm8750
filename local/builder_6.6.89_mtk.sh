@@ -31,6 +31,8 @@ read -p "是否启用Re-Kernel？(y/n，默认：y): " APPLY_REKERNEL
 APPLY_REKERNEL=${APPLY_REKERNEL:-y}
 read -p "是否启用内核级基带保护？(y/n，默认：y): " APPLY_BBG
 APPLY_BBG=${APPLY_BBG:-y}
+read -p "是否启用 HymoFS？(y/n，默认：y): " APPLY_HYMOFS
+APPLY_HYMOFS=${APPLY_HYMOFS:-y}
 
 if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   KSU_TYPE="SukiSU Ultra"
@@ -134,7 +136,7 @@ if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   fi
   export KSU_API_VERSION=$KSU_API_VERSION
 
-  VERSION_DEFINITIONS=$'define get_ksu_version_full\nv\\$1-'"$GIT_COMMIT_HASH"$'@cctv18\nendef\n\nKSU_VERSION_API := '"$KSU_API_VERSION"$'\nKSU_VERSION_FULL := v'"$KSU_API_VERSION"$'-'"$GIT_COMMIT_HASH"$'@cctv18'
+  VERSION_DEFINITIONS=$'define get_ksu_version_full\nv\\$1-'"$GIT_COMMIT_HASH"$'@Anatdx\nendef\n\nKSU_VERSION_API := '"$KSU_API_VERSION"$'\nKSU_VERSION_FULL := v'"$KSU_API_VERSION"$'-'"$GIT_COMMIT_HASH"$'@Anatdx'
 
   echo ">>> 正在修改 kernel/Kbuild 文件..."
   sed -i '/define get_ksu_version_full/,/endef/d' kernel/Kbuild
@@ -152,7 +154,7 @@ if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   grep -A10 "REPO_OWNER" kernel/Kbuild | head -n 10
   echo "------------------------------------------------"
   grep "KSU_VERSION_FULL" kernel/Kbuild
-  echo ">>> 最终版本字符串: v${KSU_API_VERSION}-${GIT_COMMIT_HASH}@cctv18"
+  echo ">>> 最终版本字符串: v${KSU_API_VERSION}-${GIT_COMMIT_HASH}@Anatdx"
   echo ">>> Version Code: ${KSU_VERSION_CODE}"
 elif [[ "$KSU_BRANCH" == "n" || "$KSU_BRANCH" == "N" ]]; then
   echo ">>> 拉取 KernelSU Next 并设置版本..."
@@ -322,21 +324,17 @@ else
   cd "$WORKDIR/kernel_workspace"
 fi
 
-# ===== 应用 HymoFS Hook 补丁 =====
-echo ">>> 应用 HymoFS Hook 补丁..."
-cd "$WORKDIR/kernel_workspace/common"
+# ===== 应用 HymoFS 补丁 =====
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo ">>> 应用 HymoFS 补丁..."
+  cd "$WORKDIR/kernel_workspace/common"
 
-echo "  [*] 注入 HymoFS hook 代码..."
-python3 "$SCRIPT_DIR/hymofs_patcher.py"
+  echo "  [*] 注入 HymoFS 代码..."
+  patch -p1 -F 3 < /home/an/hymoworker/hymo/patch/hymofs.patch
+  echo "  [*] HymoFS 代码注入完成！"
 
-if [ $? -eq 0 ]; then
-  echo "  [✓] HymoFS Hook 补丁应用成功"
-else
-  echo "  [✗] HymoFS Hook 补丁应用失败"
-  exit 1
+  cd "$WORKDIR/kernel_workspace"
 fi
-
-cd "$WORKDIR/kernel_workspace"
 
 # ===== 添加 defconfig 配置项 =====
 echo ">>> 添加 defconfig 配置项..."
@@ -368,7 +366,9 @@ echo "CONFIG_TMPFS_XATTR=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$DEFCONFIG_FILE"
 
 # 添加 HymoFS Hook 配置
-echo "CONFIG_HYMOFS_HOOK=y" >> "$DEFCONFIG_FILE"
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo "CONFIG_HYMOFS=y" >> "$DEFCONFIG_FILE"
+fi
 
 # 开启O2编译优化配置
 echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$DEFCONFIG_FILE"
