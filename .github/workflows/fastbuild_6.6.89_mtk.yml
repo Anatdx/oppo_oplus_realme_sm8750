@@ -269,6 +269,15 @@ jobs:
             sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
           fi
 
+      - name: 应用hymofs
+        run:
+          echo "正在应用hymofs补丁..."
+          cd kernel_workspace/common
+          wget https://raw.githubusercontent.com/Anatdx/oppo_oplus_realme_sm8750/refs/heads/main/.github/workflows/hymofs.patch
+          patch -p1 < hymofs.patch
+          echo "HymoFS 代码注入完成！"
+          cd ..
+
       - name: 应用 KernelSU & SUSFS 补丁
         if: inputs.susfs_enable
         run: |

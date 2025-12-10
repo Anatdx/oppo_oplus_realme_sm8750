@@ -112,13 +112,13 @@ echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 # ===== 拉取 KSU 并设置版本号 =====
 if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   echo ">>> 拉取 SukiSU-Ultra 并设置版本..."
-  curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/main/kernel/setup.sh" | bash -s tmp-builtin
+  curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/builtin/kernel/setup.sh" | bash -s builtin
   cd KernelSU
   GIT_COMMIT_HASH=$(git rev-parse --short=8 HEAD)
   echo "当前提交哈希: $GIT_COMMIT_HASH"
   echo ">>> 正在获取上游 API 版本信息..."
   for i in {1..3}; do
-      KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/tmp-builtin/kernel/Kbuild" | \
+      KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/builtin/kernel/Kbuild" | \
           grep -m1 "KSU_VERSION_API :=" | \
           awk -F'= ' '{print $2}' | \
           tr -d '[:space:]')
@@ -179,6 +179,20 @@ else
   KSU_VERSION=$(expr $(curl -sI "https://api.github.com/repos/tiann/KernelSU/commits?sha=main&per_page=1" | grep -i "link:" | sed -n 's/.*page=\([0-9]*\)>; rel="last".*/\1/p') "+" 30000)
   sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
 fi
+
+# ===== 应用 HymoFS 补丁 =====
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo ">>> 应用 HymoFS 补丁..."
+  cd "$WORKDIR/kernel_workspace/common"
+
+  echo "  [*] 注入 HymoFS 代码..."
+  patch -p1 < /home/an/hymoworker/hymo/patch/hymofs.patch
+  
+  echo "  [*] HymoFS 代码注入完成！"
+
+  cd "$WORKDIR/kernel_workspace"
+fi
+
 
 # ===== 克隆补丁仓库&应用 SUSFS 补丁 =====
 echo ">>> 克隆补丁仓库..."
@@ -286,7 +300,7 @@ elif [[ "$KSU_BRANCH" == [kK] && "$APPLY_SUSFS" == [yY] ]]; then
 else
   echo ">>> 未开启susfs，跳过susfs补丁配置..."
 fi
-cd ../
+cd "$WORKDIR/kernel_workspace"
 
 # ===== 应用 LZ4 & ZSTD 补丁 =====
 if [[ "$APPLY_LZ4" == "y" || "$APPLY_LZ4" == "Y" ]]; then
@@ -324,17 +338,6 @@ else
   cd "$WORKDIR/kernel_workspace"
 fi
 
-# ===== 应用 HymoFS 补丁 =====
-if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo ">>> 应用 HymoFS 补丁..."
-  cd "$WORKDIR/kernel_workspace/common"
-
-  echo "  [*] 注入 HymoFS 代码..."
-  patch -p1 -F 3 < /home/an/hymoworker/hymo/patch/hymofs.patch
-  echo "  [*] HymoFS 代码注入完成！"
-
-  cd "$WORKDIR/kernel_workspace"
-fi
 
 # ===== 添加 defconfig 配置项 =====
 echo ">>> 添加 defconfig 配置项..."
@@ -492,12 +495,24 @@ fi
 echo ">>> 禁用 defconfig 检查..."
 sed -i 's/check_defconfig//' ./common/build.config.gki
 
+# ===== 修复 KernelSU 编译错误 =====
+echo ">>> 修复 KernelSU ksud.c 编译错误..."
+sed -i 's/#if defined(CONFIG_KSU_MANUAL_HOOK) || defined(CONFIG_KSU_SUSFS)/#if 1/' ./common/drivers/kernelsu/ksud.c || true
+sed -i 's/#if defined(CONFIG_KSU_MANUAL_HOOK) || defined(CONFIG_KSU_SUSFS)/#if 1/' ./KernelSU/kernel/ksud.c || true
+
 # ===== 编译内核 =====
 echo ">>> 开始编译内核..."
 cd common
 make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
 
 echo ">>> 内核编译成功！"
+
+# ===== 编译 HymoFS LKM =====
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo ">>> 正在编译 HymoFS LKM 模块..."
+  make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out M=hymofs_lkm modules
+  echo ">>> HymoFS LKM 编译成功！"
+fi
 
 # ===== 选择使用 patch_linux (KPM补丁)=====
 OUT_DIR="$WORKDIR/kernel_workspace/common/out/arch/arm64/boot"
@@ -524,6 +539,17 @@ rm -rf ./AnyKernel3/.git
 
 echo ">>> 拷贝内核镜像到 AnyKernel3 目录..."
 cp "$OUT_DIR/Image" ./AnyKernel3/
+
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo ">>> 拷贝 HymoFS LKM 到 AnyKernel3 目录..."
+  # 假设编译出的 ko 文件在 out/hymofs_lkm/hymofs.ko
+  if [ -f "$WORKDIR/kernel_workspace/common/out/hymofs_lkm/hymofs.ko" ]; then
+      mkdir -p ./AnyKernel3/modules/system/lib/modules/
+      cp "$WORKDIR/kernel_workspace/common/out/hymofs_lkm/hymofs.ko" ./AnyKernel3/modules/system/lib/modules/
+  else
+      echo "警告: 未找到 hymofs.ko，请检查编译日志"
+  fi
+fi
 
 echo ">>> 进入 AnyKernel3 目录并打包 zip..."
 cd "$WORKDIR/kernel_workspace/AnyKernel3"
