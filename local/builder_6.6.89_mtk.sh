@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
+exec > >(tee buildlog.txt)
+exec 2>&1
 
 # ===== 获取脚本目录 =====
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -112,13 +114,13 @@ echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 # ===== 拉取 KSU 并设置版本号 =====
 if [[ "$KSU_BRANCH" == "y" || "$KSU_BRANCH" == "Y" ]]; then
   echo ">>> 拉取 SukiSU-Ultra 并设置版本..."
-  curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/builtin/kernel/setup.sh" | bash -s builtin
+  curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/tmp-builtin/kernel/setup.sh" | bash -s tmp-builtin
   cd KernelSU
   GIT_COMMIT_HASH=$(git rev-parse --short=8 HEAD)
   echo "当前提交哈希: $GIT_COMMIT_HASH"
   echo ">>> 正在获取上游 API 版本信息..."
   for i in {1..3}; do
-      KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/builtin/kernel/Kbuild" | \
+      KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/tmp-builtin/kernel/Kbuild" | \
           grep -m1 "KSU_VERSION_API :=" | \
           awk -F'= ' '{print $2}' | \
           tr -d '[:space:]')
@@ -180,18 +182,6 @@ else
   sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
 fi
 
-# ===== 应用 HymoFS 补丁 =====
-if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo ">>> 应用 HymoFS 补丁..."
-  cd "$WORKDIR/kernel_workspace/common"
-
-  echo "  [*] 注入 HymoFS 代码..."
-  patch -p1 < /home/an/hymoworker/hymo/patch/hymofs.patch
-  
-  echo "  [*] HymoFS 代码注入完成！"
-
-  cd "$WORKDIR/kernel_workspace"
-fi
 
 
 # ===== 克隆补丁仓库&应用 SUSFS 补丁 =====
@@ -302,6 +292,27 @@ else
 fi
 cd "$WORKDIR/kernel_workspace"
 
+# ===== 应用 HymoFS 补丁 =====
+if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
+  echo ">>> 应用 HymoFS 补丁..."
+  cd "$WORKDIR/kernel_workspace/common"
+
+  echo "  [*] 注入 HymoFS 代码..."
+  patch -p1 < /home/an/hymoworker/HymoFS/patch/hymofs_with_susfs.patch
+  
+  echo "  [*] HymoFS 代码注入完成！"
+
+  cd "$WORKDIR/kernel_workspace"
+fi
+
+# ===== 修复编译错误 =====
+echo ">>> 修复编译错误..."
+cd "$WORKDIR/kernel_workspace/common"
+echo "  [*] 应用 hmbird.h 序列点修复补丁..."
+patch -p1 < /home/an/hymoworker/oppo_oplus_realme_sm8750/other_patch/fix_hmbird_sequence_point.patch || true
+cd "$WORKDIR/kernel_workspace"
+
+
 # ===== 应用 LZ4 & ZSTD 补丁 =====
 if [[ "$APPLY_LZ4" == "y" || "$APPLY_LZ4" == "Y" ]]; then
   echo ">>> 正在添加lz4 1.10.0 & zstd 1.5.7补丁..."
@@ -381,6 +392,18 @@ echo "CONFIG_HEADERS_INSTALL=n" >> "$DEFCONFIG_FILE"
 # 仅在启用了 KPM 时添加 KPM 支持
 if [[ "$USE_PATCH_LINUX" == "y" || "$USE_PATCH_LINUX" == "Y" ]]; then
   echo "CONFIG_KPM=y" >> "$DEFCONFIG_FILE"
+fi
+
+# ===== 签名配置 =====
+if [ -f "/home/an/hymoworker/signing_key.pem" ]; then
+  echo ">>> 添加内核签名配置..."
+  echo "CONFIG_MODULE_SIG=y" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_MODULE_SIG_FORCE=n" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_MODULE_SIG_ALL=y" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_MODULE_SIG_SHA512=y" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_MODULE_SIG_HASH=\"sha512\"" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_MODULE_SIG_KEY=\"certs/signing_key.pem\"" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_SYSTEM_TRUSTED_KEYS=\"certs/signing_key_cert.pem\"" >> "$DEFCONFIG_FILE"
 fi
 
 # 仅在启用了 LZ4KD 补丁时添加相关算法支持
@@ -500,19 +523,23 @@ echo ">>> 修复 KernelSU ksud.c 编译错误..."
 sed -i 's/#if defined(CONFIG_KSU_MANUAL_HOOK) || defined(CONFIG_KSU_SUSFS)/#if 1/' ./common/drivers/kernelsu/ksud.c || true
 sed -i 's/#if defined(CONFIG_KSU_MANUAL_HOOK) || defined(CONFIG_KSU_SUSFS)/#if 1/' ./KernelSU/kernel/ksud.c || true
 
+# ===== 替换签名证书 =====
+if [ -f "/home/an/hymoworker/signing_key.pem" ]; then
+  echo ">>> 替换签名证书..."
+  mkdir -p ./common/certs
+  cp /home/an/hymoworker/signing_key.pem ./common/certs/signing_key.pem
+  # 生成 PEM 格式的证书用于 SYSTEM_TRUSTED_KEYS
+  openssl x509 -in /home/an/hymoworker/signing_key.pem -outform PEM -out ./common/certs/signing_key_cert.pem
+else
+  echo ">>> 未找到自定义证书，使用默认证书"
+fi
+
 # ===== 编译内核 =====
 echo ">>> 开始编译内核..."
 cd common
-make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
+make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE="ccache aarch64-linux-gnu-" CROSS_COMPILE_ARM32="ccache arm-linux-gnuabeihf-" CC="ccache clang" LD=ld.lld HOSTCC="ccache clang" HOSTLD=ld.lld O=out CONFIG_LTO_CLANG=n KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
 
 echo ">>> 内核编译成功！"
-
-# ===== 编译 HymoFS LKM =====
-if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo ">>> 正在编译 HymoFS LKM 模块..."
-  make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- CROSS_COMPILE_ARM32=arm-linux-gnuabeihf- CC=clang LD=ld.lld HOSTCC=clang HOSTLD=ld.lld O=out M=hymofs_lkm modules
-  echo ">>> HymoFS LKM 编译成功！"
-fi
 
 # ===== 选择使用 patch_linux (KPM补丁)=====
 OUT_DIR="$WORKDIR/kernel_workspace/common/out/arch/arm64/boot"
@@ -539,17 +566,6 @@ rm -rf ./AnyKernel3/.git
 
 echo ">>> 拷贝内核镜像到 AnyKernel3 目录..."
 cp "$OUT_DIR/Image" ./AnyKernel3/
-
-if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo ">>> 拷贝 HymoFS LKM 到 AnyKernel3 目录..."
-  # 假设编译出的 ko 文件在 out/hymofs_lkm/hymofs.ko
-  if [ -f "$WORKDIR/kernel_workspace/common/out/hymofs_lkm/hymofs.ko" ]; then
-      mkdir -p ./AnyKernel3/modules/system/lib/modules/
-      cp "$WORKDIR/kernel_workspace/common/out/hymofs_lkm/hymofs.ko" ./AnyKernel3/modules/system/lib/modules/
-  else
-      echo "警告: 未找到 hymofs.ko，请检查编译日志"
-  fi
-fi
 
 echo ">>> 进入 AnyKernel3 目录并打包 zip..."
 cd "$WORKDIR/kernel_workspace/AnyKernel3"

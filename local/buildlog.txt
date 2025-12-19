@@ -1,0 +1,3 @@
+===== 欧加真MT6991通用6.6.89 A15 OKI内核本地编译脚本 By Coolapk@cctv18 =====
+>>> 读取用户配置...
+请输入自定义内核后缀（默认：android15-8-g29d86c5fc9dd-abogki428889875-4k）: 是否启用susfs？(y/n，默认：y): 是否启用 KPM？(y/n，默认：y): KSU分支版本(y=SukiSU Ultra, n=KernelSU Next, m=MKSU, k=KSU, 默认：y): 是否应用 lz4 1.10.0 & zstd 1.5.7 补丁？(y/n，默认：y): 是否应用 lz4kd 补丁？(y/n，默认：n): 是否启用网络功能增强优化配置？(y/n，默认：n): 是否添加 BBR 等一系列拥塞控制算法？(y添加/n禁用/d默认，默认：n): 是否启用ADIOS调度器？(y/n，默认：y): 是否启用Re-Kernel？(y/n，默认：y): 

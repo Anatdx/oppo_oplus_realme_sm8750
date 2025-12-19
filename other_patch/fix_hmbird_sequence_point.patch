@@ -1,0 +1,11 @@
+--- a/include/linux/sched/hmbird.h
++++ b/include/linux/sched/hmbird.h
+@@ -343,7 +343,7 @@
+ 
+ 	idx = &rec->kern_dump.excep_idx[id];
+ 	rec->kern_dump.excep_rec[id][*idx] = jiffies;
+-	*idx = ++(*idx) % MAX_EXCEPS;
++	*idx = (*idx + 1) % MAX_EXCEPS;
+ }
+ 
+ static inline void sw_update(struct md_info_t *rec, u64 switch_at,
