@@ -163,7 +163,7 @@ if [ -f "fs/hymofs.c" ]; then
     fi
 fi
 
-if patch -p1 < "$PATCH_FILE"; then
+if patch -p1 -F 3 < "$PATCH_FILE"; then
     echo "  [*] Patch applied successfully."
 else
     echo "  [!] Patch application failed, please check error logs."
