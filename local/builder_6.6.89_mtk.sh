@@ -288,20 +288,6 @@ else
 fi
 cd "$WORKDIR/kernel_workspace"
 
-# ===== 应用 HymoFS 补丁 =====
-if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo ">>> 应用 HymoFS 补丁..."
-  cd "$WORKDIR/kernel_workspace/common"
-
-  echo "  [*] 注入 HymoFS 代码..."
-  patch -p1 < /home/an/hymoworker/HymoFS/patch/hymofs_with_susfs.patch
-  
-  echo "  [*] HymoFS 代码注入完成！"
-
-  cd "$WORKDIR/kernel_workspace"
-fi
-
-
 
 # ===== 应用 LZ4 & ZSTD 补丁 =====
 if [[ "$APPLY_LZ4" == "y" || "$APPLY_LZ4" == "Y" ]]; then
@@ -369,11 +355,19 @@ fi
 echo "CONFIG_TMPFS_XATTR=y" >> "$DEFCONFIG_FILE"
 echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$DEFCONFIG_FILE"
 
-# 添加 HymoFS Hook 配置
+# ===== 应用 HymoFS 补丁 =====
 if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
-  echo "CONFIG_HYMOFS=y" >> "$DEFCONFIG_FILE"
-  echo "CONFIG_HYMOFS_USE_KSU=y" >> "$DEFCONFIG_FILE"
+  echo ">>> 应用 HymoFS 补丁..."
+  cd "$WORKDIR/kernel_workspace/common"
+
+  echo "  [*] 注入 HymoFS 代码..."
+  curl -LSs https://raw.githubusercontent.com/Anatdx/oppo_oplus_realme_sm8750/refs/heads/main/local/setup.sh | bash -s defconfig common/arch/arm64/configs/
+  
+  echo "  [*] HymoFS 代码注入完成！"
+
+  cd "$WORKDIR/kernel_workspace"
 fi
+
 
 # 开启O2编译优化配置
 echo "CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y" >> "$DEFCONFIG_FILE"

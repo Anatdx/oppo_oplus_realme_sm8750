@@ -19,23 +19,23 @@ function show_help {
     echo "Usage: curl ... | bash -s -- [options]"
     echo ""
     echo "Options:"
-    echo "  --kernel-dir <path>   Kernel source root directory (Default: detects common/ or current dir)"
-    echo "  --defconfig <path>    Path to defconfig file (Relative to kernel directory)"
-    echo "  --with-susfs          Enable SUSFS compatibility mode"
-    echo "  --branch <name>       Specify HymoFS branch (Default: main)"
-    echo "  --repo <url>          Specify HymoFS repository URL"
-    echo "  --help                Show this help message"
+    echo "  kernel-dir <path>   Kernel source root directory (Default: detects common/ or current dir)"
+    echo "  defconfig <path>    Path to defconfig file (Relative to kernel directory)"
+    echo "  with-susfs          Enable SUSFS compatibility mode"
+    echo "  branch <name>       Specify HymoFS branch (Default: main)"
+    echo "  repo <url>          Specify HymoFS repository URL"
+    echo "  help                Show this help message"
     exit 1
 }
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --kernel-dir) KERNEL_DIR="$2"; shift ;;
-        --defconfig) DEFCONFIG_PATH="$2"; shift ;;
-        --with-susfs) WITH_SUSFS=true ;;
-        --branch) BRANCH="$2"; MANUAL_BRANCH=true; shift ;;
-        --repo) REPO_URL="$2"; shift ;;
-        --help) show_help ;;
+        kernel-dir) KERNEL_DIR="$2"; shift ;;
+        defconfig) DEFCONFIG_PATH="$2"; shift ;;
+        with-susfs) WITH_SUSFS=true ;;
+        branch) BRANCH="$2"; MANUAL_BRANCH=true; shift ;;
+        repo) REPO_URL="$2"; shift ;;
+        help) show_help ;;
         *) echo "Unknown parameter: $1"; show_help ;;
     esac
     shift
@@ -53,7 +53,7 @@ if [ -z "$KERNEL_DIR" ]; then
 fi
 
 if [ -z "$DEFCONFIG_PATH" ]; then
-    echo "Error: --defconfig is required"
+    echo "Error: defconfig is required"
     show_help
 fi
 
@@ -104,7 +104,7 @@ if [ "$MANUAL_BRANCH" = false ]; then
             else
                 echo "Error: Unsupported kernel version detected: $FULL_VER"
                 echo "Currently only Kernel 6.1 and 6.6 are supported."
-                echo "You can force a specific branch using --branch <name>"
+                echo "You can force a specific branch using branch <name>"
                 exit 1
             fi
         else
