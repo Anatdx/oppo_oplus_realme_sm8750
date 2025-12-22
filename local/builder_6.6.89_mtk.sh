@@ -15,8 +15,8 @@ read -p "请输入自定义内核后缀（默认：android15-8-g29d86c5fc9dd-abo
 CUSTOM_SUFFIX=${CUSTOM_SUFFIX:-android15-8-g29d86c5fc9dd-abogki428889875-4k}
 read -p "是否启用susfs？(y/n，默认：y): " APPLY_SUSFS
 APPLY_SUSFS=${APPLY_SUSFS:-y}
-read -p "是否启用 KPM？(y/n，默认：y): " USE_PATCH_LINUX
-USE_PATCH_LINUX=${USE_PATCH_LINUX:-y}
+read -p "是否启用 KPM？(y/n，默认：n): " USE_PATCH_LINUX
+USE_PATCH_LINUX=${USE_PATCH_LINUX:-n}
 read -p "KSU分支版本(y=SukiSU Ultra, n=KernelSU Next, m=MKSU, k=KSU, 默认：y): " KSU_BRANCH
 KSU_BRANCH=${KSU_BRANCH:-y}
 read -p "是否应用 lz4 1.10.0 & zstd 1.5.7 补丁？(y/n，默认：y): " APPLY_LZ4
@@ -301,12 +301,6 @@ if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
   cd "$WORKDIR/kernel_workspace"
 fi
 
-# ===== 修复编译错误 =====
-echo ">>> 修复编译错误..."
-cd "$WORKDIR/kernel_workspace/common"
-echo "  [*] 应用 hmbird.h 序列点修复补丁..."
-patch -p1 < /home/an/hymoworker/oppo_oplus_realme_sm8750/other_patch/fix_hmbird_sequence_point.patch || true
-cd "$WORKDIR/kernel_workspace"
 
 
 # ===== 应用 LZ4 & ZSTD 补丁 =====
@@ -378,6 +372,7 @@ echo "CONFIG_TMPFS_POSIX_ACL=y" >> "$DEFCONFIG_FILE"
 # 添加 HymoFS Hook 配置
 if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
   echo "CONFIG_HYMOFS=y" >> "$DEFCONFIG_FILE"
+  echo "CONFIG_HYMOFS_USE_KSU=y" >> "$DEFCONFIG_FILE"
 fi
 
 # 开启O2编译优化配置
@@ -533,7 +528,7 @@ fi
 # ===== 编译内核 =====
 echo ">>> 开始编译内核..."
 cd common
-make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE="ccache aarch64-linux-gnu-" CROSS_COMPILE_ARM32="ccache arm-linux-gnuabeihf-" CC="ccache clang" LD=ld.lld HOSTCC="ccache clang" HOSTLD=ld.lld O=out CONFIG_LTO_CLANG=n KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
+make -j$(nproc --all) LLVM=-18 ARCH=arm64 CROSS_COMPILE="ccache aarch64-linux-gnu-" CROSS_COMPILE_ARM32="ccache arm-linux-gnuabeihf-" CC="ccache clang" LD=ld.lld HOSTCC="ccache clang" HOSTLD=ld.lld O=out KCFLAGS+=-O2 KCFLAGS+=-Wno-error gki_defconfig all
 
 echo ">>> 内核编译成功！"
 
