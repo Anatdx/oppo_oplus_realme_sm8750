@@ -82,6 +82,9 @@ if [ "$WITH_SUSFS" = false ]; then
     elif grep -q "CONFIG_SUSFS=y" "$TARGET_DEFCONFIG"; then
         echo ">>> Detected CONFIG_SUSFS=y in defconfig."
         WITH_SUSFS=true
+    elif grep -q "susfs" "$KERNEL_DIR/fs/readdir.c"; then
+        echo ">>> Detected SUSFS code in fs/readdir.c."
+        WITH_SUSFS=true
     fi
 fi
 
