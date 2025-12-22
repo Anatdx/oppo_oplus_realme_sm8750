@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # HymoFS One-Line Setup Script
-# Usage: curl -LSs https://raw.githubusercontent.com/Anatdx/HymoFS/main/setup.sh | bash -s --defconfig arch/arm64/configs/gki_defconfig --with-susfs
+# Usage: curl -LSs https://raw.githubusercontent.com/Anatdx/HymoFS/main/setup.sh | bash -s defconfig arch/arm64/configs/gki_defconfig with-susfs
 
 set -e
 
@@ -16,7 +16,7 @@ WITH_SUSFS=false
 
 function show_help {
     echo "HymoFS Setup Script"
-    echo "Usage: curl ... | bash -s -- [options]"
+    echo "Usage: curl ... | bash -s [options]"
     echo ""
     echo "Options:"
     echo "  kernel-dir <path>   Kernel source root directory (Default: detects common/ or current dir)"

@@ -361,7 +361,7 @@ if [[ "$APPLY_HYMOFS" == "y" || "$APPLY_HYMOFS" == "Y" ]]; then
   cd "$WORKDIR/kernel_workspace/common"
 
   echo "  [*] 注入 HymoFS 代码..."
-  curl -LSs https://raw.githubusercontent.com/Anatdx/oppo_oplus_realme_sm8750/refs/heads/main/local/setup.sh | bash -s defconfig common/arch/arm64/configs/
+  curl -LSs https://raw.githubusercontent.com/Anatdx/oppo_oplus_realme_sm8750/refs/heads/main/local/setup.sh | bash -s defconfig common/arch/arm64/configs/gki_defconfig
   
   echo "  [*] HymoFS 代码注入完成！"
 

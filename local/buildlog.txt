@@ -22,11 +22,11 @@ dpkg: 错误: 需要对于 dpkg 数据库目录 /var/lib/dpkg 的读/写权限
 E: 子进程 dpkg --set-selections 返回了一个错误号 (2)
 E: 执行 dpkg 失败。您是 root 吗？
 命中:1 https://dl.google.com/linux/chrome/deb stable InRelease
-命中:2 http://archive.ubuntu.com/ubuntu noble InRelease
-命中:4 http://security.ubuntu.com/ubuntu noble-security InRelease
+命中:3 http://security.ubuntu.com/ubuntu noble-security InRelease
+命中:4 http://archive.ubuntu.com/ubuntu noble InRelease
 命中:5 http://archive.ubuntu.com/ubuntu noble-updates InRelease
 命中:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease
-命中:3 https://apt.llvm.org/noble llvm-toolchain-noble-18 InRelease
+命中:2 https://apt.llvm.org/noble llvm-toolchain-noble-18 InRelease
 命中:7 https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev antigravity-debian InRelease
 正在读取软件包列表...
 正在读取软件包列表...
@@ -58,16 +58,16 @@ tar 已经是最新版 (1.35+dfsg-3build1)。
   libqt5opengl5t64 libstd-rust-1.75 libstd-rust-dev
 使用'sudo apt autoremove'来卸载它(它们)。
 升级了 0 个软件包，新安装了 0 个软件包，要卸载 0 个软件包，有 0 个软件包未被升级。
---2025-12-22 21:26:43--  https://apt.llvm.org/llvm.sh
+--2025-12-22 21:29:59--  https://apt.llvm.org/llvm.sh
 Resolving apt.llvm.org (apt.llvm.org)... 198.18.0.4
 Connecting to apt.llvm.org (apt.llvm.org)|198.18.0.4|:443... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 7432 (7.3K) [application/octet-stream]
 Saving to: ‘llvm.sh’
 
-     0K .......                                               100% 22.4M=0s
+     0K .......                                               100% 29.9M=0s
 
-2025-12-22 21:26:45 (22.4 MB/s) - ‘llvm.sh’ saved [7432/7432]
+2025-12-22 21:30:00 (29.9 MB/s) - ‘llvm.sh’ saved [7432/7432]
 
 + CURRENT_LLVM_STABLE=20
 + BASE_URL=http://apt.llvm.org
@@ -158,11 +158,11 @@ uid           [ unknown] Sylvestre Ledru - Debian LLVM packages <sylvestre@debia
 + [[ 0 -eq 1 ]]
 + add-apt-repository -y 'deb http://apt.llvm.org/noble/  llvm-toolchain-noble-18 main'
 命中:1 https://dl.google.com/linux/chrome/deb stable InRelease
-命中:3 http://archive.ubuntu.com/ubuntu noble InRelease
-命中:4 http://security.ubuntu.com/ubuntu noble-security InRelease
+命中:2 http://archive.ubuntu.com/ubuntu noble InRelease
+命中:3 http://security.ubuntu.com/ubuntu noble-security InRelease
 命中:5 http://archive.ubuntu.com/ubuntu noble-updates InRelease
 命中:6 http://archive.ubuntu.com/ubuntu noble-backports InRelease
-命中:2 https://apt.llvm.org/noble llvm-toolchain-noble-18 InRelease
+命中:4 https://apt.llvm.org/noble llvm-toolchain-noble-18 InRelease
 命中:7 https://us-central1-apt.pkg.dev/projects/antigravity-auto-updater-dev antigravity-debian InRelease
 正在读取软件包列表...
 Repository: 'deb http://apt.llvm.org/noble/ llvm-toolchain-noble-18 main'
@@ -218,7 +218,7 @@ libpolly-18-dev 已经是最新版 (1:18.1.8~++20240731025043+3b5b5c1ec4a3-1~exp
 升级了 0 个软件包，新安装了 0 个软件包，要卸载 0 个软件包，有 0 个软件包未被升级。
 >>> 初始化仓库...
 Cloning into 'common'...
-Updating files:  32% (27024/82342)Updating files:  33% (27173/82342)Updating files:  34% (27997/82342)Updating files:  35% (28820/82342)Updating files:  36% (29644/82342)Updating files:  37% (30467/82342)Updating files:  38% (31290/82342)Updating files:  39% (32114/82342)Updating files:  40% (32937/82342)Updating files:  40% (33410/82342)Updating files:  41% (33761/82342)Updating files:  42% (34584/82342)Updating files:  43% (35408/82342)Updating files:  44% (36231/82342)Updating files:  45% (37054/82342)Updating files:  46% (37878/82342)Updating files:  47% (38701/82342)Updating files:  48% (39525/82342)Updating files:  49% (40348/82342)Updating files:  50% (41171/82342)Updating files:  51% (41995/82342)Updating files:  52% (42818/82342)Updating files:  53% (43642/82342)Updating files:  54% (44465/82342)Updating files:  54% (45002/82342)Updating files:  55% (45289/82342)Updating files:  56% (46112/82342)Updating files:  57% (46935/82342)Updating files:  58% (47759/82342)Updating files:  59% (48582/82342)Updating files:  60% (49406/82342)Updating files:  61% (50229/82342)Updating files:  62% (51053/82342)Updating files:  63% (51876/82342)Updating files:  64% (52699/82342)Updating files:  65% (53523/82342)Updating files:  66% (54346/82342)Updating files:  67% (55170/82342)Updating files:  68% (55993/82342)Updating files:  69% (56816/82342)Updating files:  70% (57640/82342)Updating files:  70% (57745/82342)Updating files:  71% (58463/82342)Updating files:  72% (59287/82342)Updating files:  73% (60110/82342)Updating files:  74% (60934/82342)Updating files:  75% (61757/82342)Updating files:  76% (62580/82342)Updating files:  77% (63404/82342)Updating files:  78% (64227/82342)Updating files:  79% (65051/82342)Updating files:  80% (65874/82342)Updating files:  81% (66698/82342)Updating files:  82% (67521/82342)Updating files:  83% (68344/82342)Updating files:  84% (69168/82342)Updating files:  85% (69991/82342)Updating files:  86% (70815/82342)Updating files:  87% (71638/82342)Updating files:  88% (72461/82342)Updating files:  89% (73285/82342)Updating files:  90% (74108/82342)Updating files:  90% (74882/82342)Updating files:  91% (74932/82342)Updating files:  92% (75755/82342)Updating files:  93% (76579/82342)Updating files:  94% (77402/82342)Updating files:  95% (78225/82342)Updating files:  96% (79049/82342)Updating files:  97% (79872/82342)Updating files:  98% (80696/82342)Updating files:  99% (81519/82342)Updating files: 100% (82342/82342)Updating files: 100% (82342/82342), done.
+Updating files:  31% (26019/82342)Updating files:  32% (26350/82342)Updating files:  33% (27173/82342)Updating files:  34% (27997/82342)Updating files:  35% (28820/82342)Updating files:  36% (29644/82342)Updating files:  37% (30467/82342)Updating files:  38% (31290/82342)Updating files:  39% (32114/82342)Updating files:  40% (32937/82342)Updating files:  40% (33502/82342)Updating files:  41% (33761/82342)Updating files:  42% (34584/82342)Updating files:  43% (35408/82342)Updating files:  44% (36231/82342)Updating files:  45% (37054/82342)Updating files:  46% (37878/82342)Updating files:  47% (38701/82342)Updating files:  48% (39525/82342)Updating files:  49% (40348/82342)Updating files:  50% (41171/82342)Updating files:  51% (41995/82342)Updating files:  52% (42818/82342)Updating files:  53% (43642/82342)Updating files:  54% (44465/82342)Updating files:  54% (45128/82342)Updating files:  55% (45289/82342)Updating files:  56% (46112/82342)Updating files:  57% (46935/82342)Updating files:  58% (47759/82342)Updating files:  59% (48582/82342)Updating files:  60% (49406/82342)Updating files:  61% (50229/82342)Updating files:  62% (51053/82342)Updating files:  63% (51876/82342)Updating files:  64% (52699/82342)Updating files:  65% (53523/82342)Updating files:  66% (54346/82342)Updating files:  67% (55170/82342)Updating files:  68% (55993/82342)Updating files:  68% (56097/82342)Updating files:  69% (56816/82342)Updating files:  70% (57640/82342)Updating files:  71% (58463/82342)Updating files:  72% (59287/82342)Updating files:  73% (60110/82342)Updating files:  74% (60934/82342)Updating files:  75% (61757/82342)Updating files:  76% (62580/82342)Updating files:  77% (63404/82342)Updating files:  78% (64227/82342)Updating files:  79% (65051/82342)Updating files:  80% (65874/82342)Updating files:  81% (66698/82342)Updating files:  82% (67521/82342)Updating files:  83% (68344/82342)Updating files:  84% (69168/82342)Updating files:  85% (69991/82342)Updating files:  86% (70815/82342)Updating files:  87% (71638/82342)Updating files:  87% (71755/82342)Updating files:  88% (72461/82342)Updating files:  89% (73285/82342)Updating files:  90% (74108/82342)Updating files:  91% (74932/82342)Updating files:  92% (75755/82342)Updating files:  93% (76579/82342)Updating files:  94% (77402/82342)Updating files:  95% (78225/82342)Updating files:  96% (79049/82342)Updating files:  97% (79872/82342)Updating files:  98% (80696/82342)Updating files:  99% (81519/82342)Updating files: 100% (82342/82342)Updating files: 100% (82342/82342), done.
 >>> 初始化仓库完成
 >>> 正在清除 ABI 文件及去除 dirty 后缀...
 >>> 替换内核版本后缀...
@@ -368,27 +368,14 @@ patching file lib/zstd/zstd_decompress_module.c
 >>> 添加 defconfig 配置项...
 >>> 应用 HymoFS 补丁...
   [*] 注入 HymoFS 代码...
-bash: --: invalid option
-Usage:	bash [GNU long option] [option] ...
-	bash [GNU long option] [option] script-file ...
-GNU long options:
-	--debug
-	--debugger
-	--dump-po-strings
-	--dump-strings
-	--help
-	--init-file
-	--login
-	--noediting
-	--noprofile
-	--norc
-	--posix
-	--pretty-print
-	--rcfile
-	--restricted
-	--verbose
-	--version
-Shell options:
-	-ilrsD or -c command or -O shopt_option		(invocation only)
-	-abefhkmnptuvxBCEHPT or -o option
-curl: (23) Failure writing output to destination
+Unknown parameter: defconfig
+HymoFS Setup Script
+Usage: curl ... | bash -s -- [options]
+
+Options:
+  --kernel-dir <path>   Kernel source root directory (Default: detects common/ or current dir)
+  --defconfig <path>    Path to defconfig file (Relative to kernel directory)
+  --with-susfs          Enable SUSFS compatibility mode
+  --branch <name>       Specify HymoFS branch (Default: main)
+  --repo <url>          Specify HymoFS repository URL
+  --help                Show this help message
