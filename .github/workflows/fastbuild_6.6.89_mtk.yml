@@ -272,16 +272,6 @@ jobs:
             sed -i "s/DKSU_VERSION=16/DKSU_VERSION=${KSU_VERSION}/" kernel/Kbuild
           fi
 
-      - name: 应用 HymoFS
-        if: inputs.hymofs_enable
-        run: |
-          echo "正在应用 HymoFS 补丁..."
-          cd kernel_workspace/common
-          wget -q https://raw.githubusercontent.com/Anatdx/oppo_oplus_realme_sm8750/refs/heads/main/.github/workflows/hymofs.patch
-          patch -p1 < hymofs.patch
-          echo "HymoFS 代码注入完成！"
-          cd ../..
-
       - name: 应用lz4 1.10.0 & zstd 1.5.7补丁
         if: inputs.lz4_enable
         run: |
@@ -336,6 +326,14 @@ jobs:
           #跳过将uapi标准头安装到 usr/include 目录的不必要操作，节省编译时间
           echo "CONFIG_HEADERS_INSTALL=n" >> ./common/arch/arm64/configs/gki_defconfig
           
+      - name: 应用 HymoFS
+        if: inputs.hymofs_enable
+        run: |
+          echo "正在应用 HymoFS 补丁..."
+          cd common
+          curl -LSs https://raw.githubusercontent.com/Anatdx/HymoFS/main/setup.sh | bash -s defconfig arch/arm64/configs/gki_defconfig
+          echo "HymoFS 代码注入完成！"
+          cd ../..
      
 
       - name: 添加 BBR 等一系列拥塞控制算法
