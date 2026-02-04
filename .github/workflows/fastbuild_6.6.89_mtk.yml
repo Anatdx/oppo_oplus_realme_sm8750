@@ -330,8 +330,7 @@ jobs:
         if: inputs.hymofs_enable
         run: |
           echo "正在应用 HymoFS 补丁..."
-          cd common
-          curl -LSs https://raw.githubusercontent.com/Anatdx/HymoFS/main/setup.sh | bash -s defconfig arch/arm64/configs/gki_defconfig
+          curl -LSs https://raw.githubusercontent.com/Anatdx/HymoFS/main/setup.sh | bash -s defconfig ./common/arch/arm64/configs/gki_defconfig
           echo "HymoFS 代码注入完成！"
           cd ../..
      
