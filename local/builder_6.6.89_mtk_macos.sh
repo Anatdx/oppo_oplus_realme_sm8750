@@ -113,6 +113,15 @@ HOSTCFLAGS_dtc.o := -DNO_YAML
   echo ">>> dtc 补丁已应用"
 fi
 
+# ===== 修复 selinux host 工具 (classmap.h 找不到：O=out 在源码子目录时 srctree 被设为 .. 导致 -I 错) =====
+# 主 Makefile 中 out 在源码内时改为 srctree := $(abs_srctree)，这样 scripts 里 -I$(srctree)/... 才能解析到源码
+echo ">>> 应用主 Makefile srctree 补丁 (scripts 用绝对路径)..."
+MAIN_MKF="common/Makefile"
+if [ -f "$MAIN_MKF" ] && grep -q 'srctree := \.\.' "$MAIN_MKF"; then
+  $SED_INPLACE 's/srctree := \.\./srctree := $(abs_srctree)/' "$MAIN_MKF"
+  echo ">>> 主 Makefile srctree 已补丁"
+fi
+
 # ===== 清除 abi 文件、去除 -dirty 后缀 =====
 echo ">>> 正在清除 ABI 文件及去除 dirty 后缀..."
 rm -f common/android/abi_gki_protected_exports_* || true
