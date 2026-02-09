@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       ksu_type:
-        description: 'KernelSU分支(SukiSU Ultra/ReSukiSU/KernelSU Next/MKSU/KSU(原版)/无内置KSU,默认SukiSU Ultra)'
+        description: 'KernelSU分支(YukiSU/ReSukiSU/KernelSU Next/MKSU/KSU(原版)/无内置KSU,默认YukiSU)'
         required: true
         type: choice
         default: 'sukisu'
@@ -184,17 +184,17 @@ jobs:
           # 进入内核工作目录
           cd kernel_workspace
           if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
-            echo "正在配置SukiSU Ultra..."
-            curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU-Ultra/refs/heads/main/kernel/setup.sh" | bash -s builtin
+            echo "正在配置YukiSU..."
+            curl -LSs "https://raw.githubusercontent.com/Anatdx/YukiSU/refs/heads/main/kernel/setup.sh" | bash -s main
             cd ./KernelSU
             # 获取当前 Git 提交的短哈希 (8位)
             GIT_COMMIT_HASH=$(git rev-parse --short=8 HEAD)
             echo "当前提交哈希: $GIT_COMMIT_HASH"
             export KSU_VERSION=$KSU_VERSION
-            # 尝试最多 3 次获取 KernelSU API 版本号
+            # 尝试最多 3 次获取 KernelSU API 版本号（从 YukiSU Kbuild 中读取）
             for i in {1..3}; do
               # 从远程 Kbuild 中提取 KSU_API_VERSION
-              KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/SukiSU-Ultra/SukiSU-Ultra/builtin/kernel/Kbuild" | 
+              KSU_API_VERSION=$(curl -s "https://raw.githubusercontent.com/Anatdx/YukiSU/main/kernel/Kbuild" | 
                 # 查找第一个包含版本定义的行
                 grep -m1 "KSU_VERSION_API :=" | 
                 # 提取等号后的值
@@ -238,7 +238,7 @@ jobs:
             # 验证修改结果
             grep -A10 "REPO_OWNER" kernel/Kbuild  # 检查插入点后的内容
             grep "KSU_VERSION_FULL" kernel/Kbuild # 确认版本定义存在
-            echo "SukiSU版本号: v${KSU_API_VERSION}-${GIT_COMMIT_HASH}@cctv18"
+            echo "YukiSU版本号: v${KSU_API_VERSION}-${GIT_COMMIT_HASH}@cctv18"
           elif [[ ${{ github.event.inputs.ksu_type }} == "resukisu" ]]; then
             echo "正在配置ReSukiSU..."
             curl -LSs "https://raw.githubusercontent.com/ReSukiSU/ReSukiSU/refs/heads/main/kernel/setup.sh" | bash -s builtin
@@ -758,7 +758,7 @@ jobs:
             exit 1
           fi
           if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
-            KSU_TYPENAME="SukiSU"
+            KSU_TYPENAME="YukiSU"
           elif [[ ${{ github.event.inputs.ksu_type }} == "resukisu" ]]; then
             KSU_TYPENAME="ReSukiSU"
           elif [[ ${{ github.event.inputs.ksu_type }} == "ksunext" ]]; then
@@ -828,7 +828,7 @@ jobs:
           TAG_HEAD="OPPO+OPlus+Realme-A15-build"
           echo "TAG_HEAD=$TAG_HEAD" >> $GITHUB_ENV
           if [[ ${{ github.event.inputs.ksu_type }} == "sukisu" ]]; then
-            KSU_TYPENAME="SukiSU Ultra"
+            KSU_TYPENAME="YukiSU"
           elif [[ ${{ github.event.inputs.ksu_type }} == "resukisu" ]]; then
             KSU_TYPENAME="ReSukiSU"
           elif [[ ${{ github.event.inputs.ksu_type }} == "ksunext" ]]; then
@@ -863,7 +863,7 @@ jobs:
             - ADIOS IO调度器支持：${{ github.event.inputs.adios_enable }}
             - Re-Kernel支持：${{ github.event.inputs.rekernel_enable }}
             - 内核级基带保护支持：${{ github.event.inputs.baseband_guard }}
-            - SukiSU Ultra管理器下载：[SukiSU-Ultra](https://github.com/SukiSU-Ultra/SukiSU-Ultra/releases)
+            - YukiSU 管理器下载：[YukiSU](https://github.com/Anatdx/YukiSU/releases)
             - KernelSU Next管理器下载：[KernelSU-Next](https://github.com/KernelSU-Next/KernelSU-Next/releases)
             - MKSU管理器下载：[Magic-KernelSU](https://github.com/5ec1cff/KernelSU/actions)
             - KSU原版管理器下载：[KernelSU](https://github.com/tiann/KernelSU/releases)
